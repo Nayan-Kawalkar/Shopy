@@ -45,6 +45,8 @@ export interface Property {
   fertilizers_percentage: string | null;
   pesticides_insecticides: string | null;
   facilities: string[];
+  latitude: number | null;
+  longitude: number | null;
   agent_id: string | null;
 }
 
@@ -70,6 +72,8 @@ export interface Article {
   technologies: string[];
   gallery: string[];
   location: string | null;
+  latitude: number | null;
+  longitude: number | null;
   conclusion: string | null;
   agent_id: string | null;
   agent: Agent | null;

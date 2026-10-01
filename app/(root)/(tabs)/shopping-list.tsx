@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -11,13 +11,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useBottomTabBarHeight } from "expo-router/tabs";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 import { s } from "../../styles";
 import { formatINR, parseRupees } from "@/lib/currency";
-import { useShoppingList } from "@/lib/shopping-list";
+import { Order, ShoppingItem, useShoppingList } from "@/lib/shopping-list";
 
 const COLORS = {
   text: s.black[300],
@@ -34,8 +34,9 @@ const roundRupees = (value: number) => Math.round(value * 100) / 100;
 const ShoppingList = () => {
   const {
     ready, items, budget, total, hasPin, locked,
-    addItem, removeItem, setBudget, createPin, unlock, lock,
+    addItem, buyAll, removeItem, setBudget, createPin, unlock, lock,
   } = useShoppingList();
+  const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const tabBarHeight = useBottomTabBarHeight();
 
   const [name, setName] = useState("");
@@ -50,8 +51,33 @@ const ShoppingList = () => {
   const [pinText, setPinText] = useState("");
   const [pinError, setPinError] = useState<string | null>(null);
 
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (toastTimer.current) clearTimeout(toastTimer.current); }, []);
+
   // Lock again when leaving this tab, so deleting needs the PIN on every visit.
   useFocusEffect(useCallback(() => () => lock(), [lock]));
+
+  const showToast = (message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(null), 2500);
+  };
+
+  // One tap orders the whole list (pay on delivery). buyAll refuses when the list is over the limit.
+  const handleBuyAll = () => {
+    const order = buyAll();
+    if (order) setLastOrder(order);
+  };
+
+  // Shop products link to their page; items typed in by hand have nothing to show.
+  const openItem = (item: ShoppingItem) => {
+    if (item.productId) {
+      router.push(`/property/${item.productId}`);
+    } else {
+      showToast(`No preview available for “${item.name}”. It isn't a product in the shop.`);
+    }
+  };
 
   const over = roundRupees(total - budget);
   const ratio = budget > 0 ? total / budget : 0;
@@ -63,6 +89,7 @@ const ShoppingList = () => {
     if (!trimmed) return setFormError("Write what you want to buy.");
     if (amount === null) return setFormError("Enter the cost in rupees, for example 68.");
     addItem(trimmed, amount);
+    setLastOrder(null);
     setName("");
     setCost("");
     setFormError(null);
@@ -167,7 +194,7 @@ const ShoppingList = () => {
             placeholderTextColor={COLORS.muted}
             value={name}
             onChangeText={setName}
-            style={[styles.input, { flex: 1 }]}
+            style={[styles.input, { flex: 1, minWidth: 0 }]}
             returnKeyType="next"
           />
           <View style={[styles.input, styles.costInputWrap]}>
@@ -189,11 +216,26 @@ const ShoppingList = () => {
         {formError && <Text style={styles.errorText}>{formError}</Text>}
       </View>
 
+      {lastOrder && (
+        <View style={styles.success}>
+          <Ionicons name="checkmark-circle" size={22} color={COLORS.green} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.successTitle}>Order placed</Text>
+            <Text style={styles.successText}>
+              {lastOrder.lines.length} {lastOrder.lines.length === 1 ? "item" : "items"} · {formatINR(lastOrder.total)} · {lastOrder.paymentMode}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={() => router.push("/orders")} style={styles.ghostButton}>
+            <Text style={styles.ghostText}>View</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {over > 0 && (
         <View style={styles.warning}>
           <Ionicons name="warning" size={18} color={COLORS.red} />
           <Text style={styles.warningText}>
-            You're {formatINR(over)} over your {formatINR(budget)} limit.
+            You're {formatINR(over)} over your {formatINR(budget)} limit. Buy All is unavailable until you're back under it.
           </Text>
         </View>
       )}
@@ -212,7 +254,7 @@ const ShoppingList = () => {
         data={items}
         keyExtractor={(item) => item.id}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight + 130 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight + 170 }}
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         ListEmptyComponent={
@@ -227,13 +269,26 @@ const ShoppingList = () => {
           )
         }
         renderItem={({ item }) => (
-          <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => openItem(item)}
+            activeOpacity={0.7}
+            accessibilityLabel={`Open ${item.name}`}
+          >
             <View style={styles.rowIcon}>
-              <Ionicons name="basket-outline" size={18} color={COLORS.green} />
+              <Ionicons name={item.productId ? "storefront-outline" : "basket-outline"} size={18} color={COLORS.green} />
             </View>
-            <Text style={styles.rowName} numberOfLines={1}>{item.name}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowName} numberOfLines={1}>{item.name}</Text>
+              {item.quantity != null && item.unitPrice != null && (
+                <Text style={styles.rowMeta} numberOfLines={1}>
+                  {item.quantity} × {formatINR(item.unitPrice)}{item.paymentMode ? ` · ${item.paymentMode}` : ""}
+                </Text>
+              )}
+              {!!item.note && <Text style={styles.rowMeta} numberOfLines={1}>“{item.note}”</Text>}
+            </View>
             <Text style={styles.rowCost}>{formatINR(item.cost)}</Text>
-            {!locked && (
+            {!locked ? (
               <TouchableOpacity
                 onPress={() => removeItem(item.id)}
                 style={styles.deleteButton}
@@ -241,28 +296,53 @@ const ShoppingList = () => {
               >
                 <Ionicons name="trash-outline" size={18} color={COLORS.red} />
               </TouchableOpacity>
+            ) : (
+              !!item.productId && <Ionicons name="chevron-forward" size={16} color={COLORS.muted} />
             )}
-          </View>
+          </TouchableOpacity>
         )}
       />
 
       <View style={[styles.footer, { bottom: tabBarHeight }]}>
+        {toast && (
+          <View style={styles.toast}>
+            <Ionicons name="eye-off-outline" size={16} color="white" />
+            <Text style={styles.toastText}>{toast}</Text>
+          </View>
+        )}
         <View style={styles.progressTrack}>
           <View
             style={[styles.progressFill, { width: `${Math.min(ratio, 1) * 100}%`, backgroundColor: statusColor }]}
           />
         </View>
         <View style={styles.footerRow}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.label}>Total</Text>
             <Text style={[styles.totalValue, over > 0 && { color: COLORS.red }]}>{formatINR(total)}</Text>
+            <Text style={[styles.remaining, { color: statusColor }]}>
+              {over > 0
+                ? `${formatINR(over)} over limit`
+                : `${formatINR(roundRupees(budget - total))} left of ${formatINR(budget)}`}
+            </Text>
           </View>
-          <Text style={[styles.remaining, { color: statusColor }]}>
-            {over > 0
-              ? `${formatINR(over)} over limit`
-              : `${formatINR(roundRupees(budget - total))} left of ${formatINR(budget)}`}
-          </Text>
+          {items.length > 0 && (
+            <TouchableOpacity
+              onPress={handleBuyAll}
+              disabled={over > 0}
+              style={[styles.buyButton, over > 0 && styles.buyButtonDisabled]}
+              accessibilityLabel="Buy all items"
+              accessibilityState={{ disabled: over > 0 }}
+            >
+              <Ionicons name={over > 0 ? "lock-closed" : "bag-check-outline"} size={18} color="white" />
+              <Text style={styles.buyText}>Buy All</Text>
+            </TouchableOpacity>
+          )}
         </View>
+        {over > 0 && items.length > 0 && (
+          <Text style={styles.limitNote}>
+            Spending limit exceeded. Remove items or raise your limit to buy.
+          </Text>
+        )}
       </View>
 
       <Modal
@@ -450,6 +530,7 @@ const styles = StyleSheet.create({
   },
   costInput: {
     flex: 1,
+    minWidth: 0,
     height: "100%",
     fontFamily: "Rubik-Regular",
     fontSize: 15,
@@ -508,10 +589,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   rowName: {
-    flex: 1,
     fontFamily: "Rubik-Medium",
     fontSize: 16,
     color: COLORS.text,
+  },
+  rowMeta: {
+    fontFamily: "Rubik-Regular",
+    fontSize: 12,
+    color: COLORS.muted,
+    marginTop: 2,
+  },
+  toast: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: COLORS.text,
+  },
+  toastText: {
+    flex: 1,
+    fontFamily: "Rubik-Medium",
+    fontSize: 13,
+    color: "white",
   },
   rowCost: {
     fontFamily: "Rubik-SemiBold",
@@ -573,8 +675,50 @@ const styles = StyleSheet.create({
   },
   remaining: {
     fontFamily: "Rubik-Medium",
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  buyButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 13,
+    borderRadius: 999,
+    backgroundColor: COLORS.green,
+  },
+  buyButtonDisabled: {
+    backgroundColor: "#B8BCC8",
+  },
+  buyText: {
+    fontFamily: "Rubik-Bold",
+    fontSize: 16,
+    color: "white",
+  },
+  limitNote: {
+    fontFamily: "Rubik-Medium",
+    fontSize: 13,
+    color: COLORS.red,
+    marginTop: 8,
+  },
+  success: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#EAF6EA",
+  },
+  successTitle: {
+    fontFamily: "Rubik-SemiBold",
+    fontSize: 15,
+    color: COLORS.text,
+  },
+  successText: {
+    fontFamily: "Rubik-Regular",
+    fontSize: 13,
+    color: COLORS.muted,
+    marginTop: 2,
   },
   backdrop: {
     flex: 1,

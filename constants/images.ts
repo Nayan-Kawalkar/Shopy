@@ -1,4 +1,3 @@
-import onboarding from "@/assets/images/onboarding.png";
 import avatar from "@/assets/images/avatar.png";
 import avatar2 from "@/assets/images/avatar2.jpg";
 import newYork from "@/assets/images/new-york.png";
@@ -9,9 +8,10 @@ import whiteGradient from "@/assets/images/white-gradient.png";
 import map from "@/assets/images/map.png";
 import noResult from "@/assets/images/no-result.png";
 import aiImage from "@/assets/images/aiImage.webp";
+import logo from "@/assets/images/logo.png";
 
 export default {
-  onboarding,
+  logo,
   avatar,
   avatar2,
   newYork,

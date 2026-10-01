@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "latestApp",
+    "name": "Digital Farm",
     "slug": "latestApp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,8 +12,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#43A047"
       }
     },
     "web": {
@@ -27,9 +27,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "resizeMode": "cover",
-          "backgroundColor": "#ffffff",
-          "enableFullScreenImage_legacy": true
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
         }
       ],
     [
@@ -46,7 +46,13 @@
 
         ]
       }
-    ]
+    ],
+      [
+        "expo-notifications",
+        {
+          "color": "#4CAF50"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,218 +1,95 @@
+import React from "react";
+import { FlatList, Image, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useBottomTabBarHeight } from "expo-router/tabs";
 
-import { View, Text, Image,StyleSheet, ScrollView, TouchableOpacity, FlatList, Button, ActivityIndicator, Platform } from 'react-native'
+import images from "@/constants/images";
+import MarketPrices from "@/components/MarketPrices";
+import NewsCard from "@/components/NewsCard";
+import PriceMapSection from "@/components/PriceMapSection";
+import { getFarmNews } from "@/lib/news";
+import { useCropPrices } from "@/lib/use-crop-prices";
+import { useSupabase } from "@/lib/useSupabase";
 
-import React, { useEffect } from 'react'
-import { Link, Stack, useLocalSearchParams } from 'expo-router'
-import { s } from '../../styles'; // Import global styles
-import { SafeAreaView } from 'react-native-safe-area-context';
-import images from '@/constants/images';
-
-import Search from '@/components/Search';
-import { Card, FeacherCard } from '@/components/Card';
-import FilterArticle from '@/components/FilterArticle';
-import { useGlobalContext } from '@/lib/global-provider';
-import { getLatestArticle, getArticle } from '@/lib/supabase';
-import { useSupabase } from '@/lib/useSupabase';
-import NoResults from '@/components/NoResult';
-//import Card from '@/components/Card'
-import Comment from '@/components/Comment';
-import { useRouter } from "expo-router"
-import AnimatedProfile from "@/components/AnimatedProfile";
-import { useState } from "react"
-
-import { router } from "expo-router"
-import ArticleCard from "@/components/Article-card"
-import icons from "@/constants/icons"
-
+// Articles tab: latest farm news, today's mandi prices (crops in the news first) and a price map.
 const ArticlesFeed = () => {
-  
+  const tabBarHeight = useBottomTabBarHeight();
 
-  //fecth from database
-  const router = useRouter()
-
-  const {user}= useGlobalContext();
-  const params = useLocalSearchParams<{ query?: string; filter?: string }>();
-
-  const { data: latestArticles, loading: latestArticlesLoading } =
-    useSupabase({
-      fn: getLatestArticle,
-    });
-
-  const {
-    data: articles,
-    refetch,
-    loading,
-  } = useSupabase({
-    fn: getArticle,
-    params: {
-      filter: params.filter!,
-      query: params.query!,
-      limit: 6,
-    },
-    skip: true,
-  });
-
-  useEffect(() => {
-    refetch({
-      filter: params.filter!,
-      query: params.query!,
-      limit: 6,
-    });
-  }, [params.filter, params.query]);
-  
-  const handleCardPress = (id: string) => router.push(`/article/${id}`);
-  
-
-  // Sample categories for the tabs
-
-  // Sample articles data
- 
-
-  // Filter articles based on active tab
-
+  // Latest Indian farming headlines (NewsAPI, then GDELT, then saved or sample headlines).
+  const { data: news } = useSupabase({ fn: getFarmNews });
+  // The selected crop and its prices, shared by the price list and the map.
+  const prices = useCropPrices(news);
+  const onlySamples = !!news?.length && news.every((article) => article.isSample);
 
   return (
-    <View style={styles.container}>
-      <FlatList
-          data={articles}
-          renderItem={({item}) => <ArticleCard item={item} onPress={()=> handleCardPress(item.id)} />}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={{paddingBottom: 0,}}
-          columnWrapperStyle={{justifyContent: 'space-between', gap: 20,}}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            loading ? (
-              <ActivityIndicator size="large" color="#3b82f6" style={{marginTop: 20}} />
-            ) : (
-              <NoResults />
-            )
-          }
-          ListHeaderComponent={
-      
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>Farming Articles</Text>
-          <TouchableOpacity style={styles.profileButton}>
-            <Image source={{ uri: "/placeholder.svg?height=100&width=100" }} style={styles.profileImage} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Search Bar */}
-            <Search />
-            <FilterArticle />
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.headerTop}>
+        <Text style={styles.headerTitle}>Farm News & Prices</Text>
+        <Image source={images.logo} style={styles.logo} accessibilityLabel="Digital Farm logo" />
       </View>
-          
-     
-      
-          } />
-          
-    </View>
-  )
-}
+
+      {news && news.length > 0 && (
+        <View>
+          <Text style={styles.sectionHeading}>{onlySamples ? "Sample headlines" : "Latest farm news"}</Text>
+          {onlySamples && (
+            <Text style={styles.sampleNote}>Live news is unavailable right now, so these are examples.</Text>
+          )}
+          <FlatList
+            horizontal
+            data={news}
+            keyExtractor={(article, index) => article.url || `sample-${index}`}
+            renderItem={({ item }) => <NewsCard article={item} />}
+            ItemSeparatorComponent={() => <View style={{ width: 12 }} />}
+            showsHorizontalScrollIndicator={false}
+          />
+        </View>
+      )}
+
+      <MarketPrices prices={prices} />
+      <PriceMapSection prices={prices} />
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
-  },
-  header: {
     backgroundColor: "white",
+  },
+  content: {
     paddingTop: Platform.OS === "ios" ? 50 : 40,
-    paddingBottom: 15,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
   },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#212121",
   },
-  profileButton: {
+  logo: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    overflow: "hidden",
   },
-  profileImage: {
-    width: "100%",
-    height: "100%",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
-    borderRadius: 50,
-    paddingHorizontal: 15,
-    height: 45,
-  },
-  searchIcon: {
-    width: 20,
-    height: 20,
-    marginRight: 10,
-    tintColor: "#9E9E9E",
-  },
-  searchInput: {
-    flex: 1,
+  sectionHeading: {
     fontSize: 16,
+    fontWeight: "bold",
     color: "#212121",
+    marginTop: 20,
+    marginBottom: 10,
   },
-  categoriesContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    backgroundColor: "white",
+  sampleNote: {
+    fontSize: 12,
+    color: "#757575",
+    marginTop: -6,
+    marginBottom: 10,
   },
-  categoryTab: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 50,
-    marginRight: 10,
-    backgroundColor: "#F5F5F5",
-  },
-  activeTab: {
-    backgroundColor: "#4CAF50",
-  },
-  categoryText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#616161",
-  },
-  activeCategoryText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  articlesContainer: {
-    padding: 16,
-  },
-  fab: {
-    position: "absolute",
-    right: 20,
-    bottom: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#4CAF50",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
-  fabIcon: {
-    fontSize: 30,
-    color: "white",
-    fontWeight: "bold",
-  },
-})
+});
 
-export default ArticlesFeed
-
+export default ArticlesFeed;

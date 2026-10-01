@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import icons from "@/constants/icons";
 import images from "@/constants/images";
 import { technologies } from "@/constants/data";
+import FarmMap from "@/components/FarmMap";
 
 import { useSupabase } from "@/lib/useSupabase";
 import { getArticleById } from "@/lib/supabase";
@@ -209,7 +210,16 @@ const FarmingArticle = () => {
               <Image source={icons.location} style={styles.locationIcon} />
               <Text style={styles.locationText}>{article.location || "Location not specified"}</Text>
             </View>
-            <Image source={images.map} style={styles.mapImage} />
+            {article.latitude != null && article.longitude != null ? (
+              <FarmMap
+                latitude={article.latitude}
+                longitude={article.longitude}
+                title={article.name}
+                address={article.location}
+              />
+            ) : (
+              <Image source={images.map} style={styles.mapImage} />
+            )}
           </View>
 
           {/* Conclusion */}

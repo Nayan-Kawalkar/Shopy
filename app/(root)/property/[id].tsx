@@ -11,16 +11,19 @@ import {
   StyleSheet,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 import icons from "@/constants/icons";
 import images from "@/constants/images";
 import Comment from "@/components/Comment";
+import FarmMap from "@/components/FarmMap";
+import BookingSheet from "@/components/BookingSheet";
 import { facilities } from "@/constants/data";
 
 import { useSupabase } from "@/lib/useSupabase";
 import { getPropertyById } from "@/lib/supabase";
 import { formatINR } from "@/lib/currency";
-import { useShoppingList } from "@/lib/shopping-list";
+import { Booking, useShoppingList } from "@/lib/shopping-list";
 
 const Property = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -28,33 +31,73 @@ const Property = () => {
   const windowHeight = Dimensions.get("window").height;
 
   // Fetching property data from Supabase
-  const { data: property } = useSupabase({
+  const { data: property, loading } = useSupabase({
     fn: getPropertyById,
     params: {
       id: id!,
     },
   });
 
-  const { addItem, total, budget } = useShoppingList();
-  const [added, setAdded] = useState(false);
+  const { addProduct, bookProduct, items, total, budget } = useShoppingList();
+  const [bookingOpen, setBookingOpen] = useState(false);
+  // Feedback shown above the action buttons after booking or adding to the list.
+  const [notice, setNotice] = useState<{ title: string; text: string; warning?: boolean } | null>(null);
+
+  const confirmBooking = (booking: Booking) => {
+    if (!property) return;
+    const order = bookProduct(property.name, booking);
+    setBookingOpen(false);
+    setNotice({
+      title: "Booking confirmed",
+      text: `${booking.quantity} × ${property.name} · ${formatINR(order.total)} · ${booking.paymentMode}. See it in My Orders.`,
+    });
+  };
+
+  const addToList = () => {
+    if (!property || property.price == null) return;
+    const newTotal = Math.round((total + property.price) * 100) / 100;
+    addProduct({ id: property.id, name: property.name, price: property.price });
+    setNotice(
+      newTotal > budget
+        ? {
+            title: "Added to your list",
+            text: `Your list is now ${formatINR(Math.round((newTotal - budget) * 100) / 100)} over your ${formatINR(budget)} limit, so Buy All is unavailable until it's back under.`,
+            warning: true,
+          }
+        : { title: "Added to your list", text: `List total ${formatINR(newTotal)} of ${formatINR(budget)}.` }
+    );
+  };
 
   // Checking if the property data exists
   if (!property) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+        {loading ? (
+          <Text>Loading...</Text>
+        ) : (
+          <>
+            <Ionicons name="eye-off-outline" size={40} color="#9CA3AF" />
+            <Text style={styles.noPreviewTitle}>No preview available</Text>
+            <Text style={styles.noPreviewText}>This product isn't in the shop anymore.</Text>
+            <TouchableOpacity style={[styles.bookButton, { marginTop: 16 }]} onPress={() => router.back()}>
+              <Text style={styles.bookButtonText}>Go back</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     );
   }
 
  
 
+  const priced = property.price != null;
+  const inList = items.find((item) => item.productId === property.id)?.quantity ?? 0;
+
   return (
     <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContent}
-        style={{ marginBottom: 50 }}
       >
         {/* Image section */}
         <View style={[styles.imageContainer, { height: windowHeight / 2 }]}>
@@ -212,10 +255,19 @@ const Property = () => {
               <Text style={styles.locationText}>{property?.address}</Text>
             </View>
 
-            <Image
-              source={images.map}
-              style={styles.mapImage}
-            />
+            {property.latitude != null && property.longitude != null ? (
+              <FarmMap
+                latitude={property.latitude}
+                longitude={property.longitude}
+                title={property.name}
+                address={property.address}
+              />
+            ) : (
+              <Image
+                source={images.map}
+                style={styles.mapImage}
+              />
+            )}
           </View>
 
           {/* Reviews */}
@@ -244,30 +296,64 @@ const Property = () => {
 
       {/* Booking Section */}
       <View style={styles.bookSection}>
-        {added && (
-          <Text style={[styles.listStatus, total > budget && styles.listStatusOver]}>
-            {total > budget
-              ? `Added. Your list is ${formatINR(Math.round((total - budget) * 100) / 100)} over your ${formatINR(budget)} limit.`
-              : `Added to your list. Total ${formatINR(total)} of ${formatINR(budget)}.`}
-          </Text>
+        {notice && (
+          <View style={[styles.confirmation, notice.warning && styles.confirmationWarning]}>
+            <Ionicons
+              name={notice.warning ? "warning" : "checkmark-circle"}
+              size={22}
+              color={notice.warning ? "#F75555" : "#4CAF50"}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.confirmationTitle}>{notice.title}</Text>
+              <Text style={[styles.confirmationText, notice.warning && styles.listStatusOver]}>{notice.text}</Text>
+            </View>
+          </View>
         )}
+
         <View style={styles.bookSectionContent}>
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>Price</Text>
             <Text style={styles.price}>{formatINR(property.price)}</Text>
           </View>
+          {inList > 0 && <Text style={styles.inListText}>{inList} in your list</Text>}
+        </View>
 
+        <View style={styles.actionRow}>
           <TouchableOpacity
-            style={styles.bookButton}
-            onPress={() => {
-              addItem(property.name, property.price ?? 0);
-              setAdded(true);
-            }}
+            style={[styles.actionButton, styles.actionPrimary, !priced && styles.actionDisabled]}
+            disabled={!priced}
+            onPress={() => setBookingOpen(true)}
+            accessibilityLabel="Book this product"
           >
-            <Text style={styles.bookButtonText}>{added ? "Add Again" : "Add to List"}</Text>
+            <Ionicons name="calendar-outline" size={18} color="white" />
+            <Text style={styles.actionTextLight}>Book</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionOutline, !priced && styles.actionDisabled]}
+            disabled={!priced}
+            onPress={addToList}
+            accessibilityLabel="Add product to shopping list"
+          >
+            <Ionicons name="add-circle-outline" size={18} color="#4CAF50" />
+            <Text style={styles.actionTextGreen}>Add Product</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.actionDark]}
+            onPress={() => router.push("/shopping-list")}
+            accessibilityLabel="Go to the shopping list to buy all items"
+          >
+            <Ionicons name="bag-check-outline" size={18} color="white" />
+            <Text style={styles.actionTextLight}>Buy All{items.length > 0 ? ` (${items.length})` : ""}</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      <BookingSheet
+        visible={bookingOpen}
+        product={{ id: property.id, name: property.name, price: property.price ?? 0 }}
+        onClose={() => setBookingOpen(false)}
+        onConfirm={confirmBooking}
+      />
     </View>
   );
 };
@@ -283,7 +369,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scrollViewContent: {
-    paddingBottom: 32,
+    // Room for the action bar fixed at the bottom.
+    paddingBottom: 200,
   },
   imageContainer: {
     position: "relative",
@@ -528,12 +615,85 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: "white",
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#EEF0F4",
   },
-  listStatus: {
+  inListText: {
     fontSize: 13,
     color: "#4CAF50",
-    marginBottom: 10,
+    fontWeight: "600",
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  actionButton: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 14,
+  },
+  actionPrimary: {
+    backgroundColor: "#4CAF50",
+  },
+  actionOutline: {
+    borderWidth: 1.5,
+    borderColor: "#4CAF50",
+    backgroundColor: "white",
+  },
+  actionDark: {
+    backgroundColor: "#191D31",
+  },
+  actionDisabled: {
+    opacity: 0.5,
+  },
+  actionTextLight: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "white",
+  },
+  actionTextGreen: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#4CAF50",
+  },
+  confirmationWarning: {
+    backgroundColor: "#FDECEC",
+  },
+  noPreviewTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#191D31",
+    marginTop: 10,
+  },
+  noPreviewText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 4,
+  },
+  confirmation: {
+    flexDirection: "row",
+    gap: 10,
+    padding: 12,
+    marginBottom: 12,
+    borderRadius: 14,
+    backgroundColor: "#F1FAF1",
+  },
+  confirmationTitle: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#191D31",
+  },
+  confirmationText: {
+    fontSize: 13,
+    color: "#4B5563",
+    marginTop: 2,
   },
   listStatusOver: {
     color: "#F75555",

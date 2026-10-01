@@ -5,7 +5,8 @@ import { Redirect, router } from 'expo-router';
 import { s } from '../styles'; // Import global styles
 import images from '@/constants/images';
 import icons from '@/constants/icons';
-import {login} from '@/lib/supabase';
+import { getProperties, login } from '@/lib/supabase';
+import { useSupabase } from '@/lib/useSupabase';
 import { useGlobalContext } from '@/lib/global-provider';
 
 
@@ -13,6 +14,15 @@ const App = () => {
   const { isLogged, loading } = useGlobalContext();
   const [signingIn, setSigningIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The welcome collage uses the shop's own product photos (placeholders until they load).
+  const { data: products } = useSupabase({
+    fn: getProperties,
+    params: { filter: "All", query: "", limit: 6 },
+  });
+  const photos = (products ?? []).map((product) => product.image).filter((uri): uri is string => !!uri);
+  const tiles = Array.from({ length: 6 }, (_, i) => photos[i] ?? null);
+  const columns = [tiles.slice(0, 2), tiles.slice(2, 4), tiles.slice(4, 6)];
 
   if (!loading && isLogged) return <Redirect href="/" />;
 
@@ -32,9 +42,26 @@ const App = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView  >
-        {/* Onboarding Image */}
-        <Image source={images.onboarding} style={styles.image} />
+      <ScrollView style={{ width: '100%' }}>
+        {/* Product collage + logo */}
+        <View style={styles.hero}>
+          <View style={styles.collage}>
+            {columns.map((column, i) => (
+              <View key={i} style={[styles.collageColumn, i === 1 && styles.collageColumnOffset]}>
+                {column.map((uri, j) =>
+                  uri ? (
+                    <Image key={j} source={{ uri }} style={styles.tile} resizeMode="cover" />
+                  ) : (
+                    <View key={j} style={styles.tile} />
+                  )
+                )}
+              </View>
+            ))}
+          </View>
+          <View style={styles.logoWrap}>
+            <Image source={images.logo} style={styles.logo} accessibilityLabel="Digital Farm logo" />
+          </View>
+        </View>
 
         {/* Welcome Section */}
         <View style={styles.contain}>
@@ -94,9 +121,46 @@ const styles = StyleSheet.create({
     padding: 1,
     gap: 20,
   },
-  image: {
-    width: '100%', // Fill the width of its container
-    height: 480, // Fixed height for the image
+  hero: {
+    width: '100%',
+    paddingTop: 12,
+    marginBottom: 24,
+  },
+  collage: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    height: 330,
+    overflow: 'hidden',
+  },
+  collageColumn: {
+    flex: 1,
+    gap: 10,
+  },
+  collageColumnOffset: {
+    marginTop: 40,
+  },
+  tile: {
+    width: '100%',
+    height: 150,
+    borderRadius: 18,
+    backgroundColor: '#EAF6EA',
+  },
+  logoWrap: {
+    alignSelf: 'center',
+    marginTop: -46,
+    padding: 5,
+    borderRadius: 28,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  logo: {
+    width: 84,
+    height: 84,
   },
   welcomeText: {
     color: s.black[200],

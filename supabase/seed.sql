@@ -99,3 +99,23 @@ insert into public.articles (id, name, type, date, image, description, farm_size
    '{}',
    'Pune, Maharashtra', null, 'a0000000-0000-4000-8000-000000000003')
 on conflict (id) do nothing;
+
+-- Map coordinates for the farms above (same values as migration 20261001123000_farm_locations.sql).
+update public.properties as p set latitude = c.lat, longitude = c.lng
+from (values
+  ('b0000000-0000-4000-8000-000000000001'::uuid, 16.9934, 73.2954), -- Ratnagiri
+  ('b0000000-0000-4000-8000-000000000002'::uuid, 20.0112, 73.7902), -- Nashik
+  ('b0000000-0000-4000-8000-000000000003'::uuid, 16.1357, 73.6522), -- Sindhudurg
+  ('b0000000-0000-4000-8000-000000000004'::uuid, 21.5220, 70.4582), -- Junagadh
+  ('b0000000-0000-4000-8000-000000000005'::uuid, 22.5587, 72.9627), -- Anand
+  ('b0000000-0000-4000-8000-000000000006'::uuid, 11.2192, 78.1679)  -- Namakkal
+) as c(id, lat, lng)
+where p.id = c.id and p.latitude is null;
+
+update public.articles as a set latitude = c.lat, longitude = c.lng
+from (values
+  ('e0000000-0000-4000-8000-000000000001'::uuid, 20.0112, 73.7902), -- Nashik
+  ('e0000000-0000-4000-8000-000000000002'::uuid, 21.5220, 70.4582), -- Junagadh
+  ('e0000000-0000-4000-8000-000000000003'::uuid, 18.5214, 73.8545)  -- Pune
+) as c(id, lat, lng)
+where a.id = c.id and a.latitude is null;

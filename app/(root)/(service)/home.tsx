@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import images from "@/constants/images";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -9,10 +10,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Image 
-          source={{ uri: "https://img.freepik.com/premium-photo/farmer-with-hologram-farm-field-digital-farming-concept-ai-generated_889761-2131.jpg?w=2000" }} 
-          style={styles.logo} 
-        />
+        <Image source={images.logo} style={styles.logo} accessibilityLabel="Digital Farm logo" />
         <Text style={styles.title}>Digital Farm Assistant</Text>
       </View>
       
@@ -73,7 +71,9 @@ const styles = StyleSheet.create({
   logo: {
     width: 50,
     height: 50,
-    borderRadius: 25,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.6)",
   },
   title: {
     fontSize: 22,
