@@ -41,19 +41,19 @@ const App = () => {
           {/* Subheading */}
           <View style={[styles.contain, { gap: 10 }]}>
             <Text style={styles.welcomeText}>
-              Welcome To Restate
+              Welcome to Digital Farm
             </Text>
 
-          
+
             <Text style={styles.heading}>
-              Let's Get You Closer to 
-              <Text style={styles.highlightedText}> Your Ideal Home </Text>
+              Shop Farm-Fresh Groceries
+              <Text style={styles.highlightedText}> Within Your Budget </Text>
             </Text>
           </View>
-        
+
           {/* Login Prompt */}
           <Text style={styles.loginPrompt}>
-            Login to ReState with Google
+            Login to Digital Farm with Google
           </Text>
         </View>
 

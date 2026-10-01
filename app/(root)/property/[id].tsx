@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   Image,
@@ -19,12 +19,14 @@ import { facilities } from "@/constants/data";
 
 import { useSupabase } from "@/lib/useSupabase";
 import { getPropertyById } from "@/lib/supabase";
+import { formatINR } from "@/lib/currency";
+import { useShoppingList } from "@/lib/shopping-list";
 
 const Property = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const windowHeight = Dimensions.get("window").height;
-  
+
   // Fetching property data from Supabase
   const { data: property } = useSupabase({
     fn: getPropertyById,
@@ -32,6 +34,9 @@ const Property = () => {
       id: id!,
     },
   });
+
+  const { addItem, total, budget } = useShoppingList();
+  const [added, setAdded] = useState(false);
 
   // Checking if the property data exists
   if (!property) {
@@ -101,31 +106,28 @@ const Property = () => {
           {/* Property Information */}
           <ScrollView horizontal>
           <View style={styles.propertyInfo}>
-            <View style={styles.infoItem}>
-              <View style={styles.container}>
-                <Image source={icons.bed} style={styles.iconSize} />
+            {property.fertilizers_percentage && (
+              <View style={styles.infoItem}>
+                <View style={styles.container}>
+                  <Image source={icons.bed} style={styles.iconSize} />
+                </View>
+                <Text style={styles.infoText}>{property.fertilizers_percentage} Fertilizers</Text>
               </View>
-              <Text style={styles.infoText}>{property?.fertilizers_percentage} Fertilizers</Text>
-            </View>
+            )}
 
-            <View style={styles.infoItem}>
-              <View style={styles.container}>
-                <Image source={icons.bath} style={styles.iconSize} />
+            {property.pesticides_insecticides && (
+              <View style={styles.infoItem}>
+                <View style={styles.container}>
+                  <Image source={icons.bath} style={styles.iconSize} />
+                </View>
+                <Text style={styles.infoText}>{property.pesticides_insecticides} Pesticides</Text>
               </View>
-              <Text style={styles.infoText}>{property?.pesticides_insecticides} Pesticides</Text>
-            </View>
-
-            <View style={styles.infoItem}>
-              <View style={styles.container}>
-                <Image source={icons.area} style={styles.iconSize} />
-              </View>
-              <Text style={styles.infoText}>{property?.area} sqft</Text>
-            </View>
+            )}
           </View>
           </ScrollView>
           {/* Agent Information */}
           <View style={styles.agentSection}>
-            <Text style={styles.agentTitle}>Agent</Text>
+            <Text style={styles.agentTitle}>Seller</Text>
             <View style={styles.agentInfo}>
               <View style={styles.agentInfoLeft}>
                 <Image
@@ -153,7 +155,7 @@ const Property = () => {
 
           {/* Facilities */}
           <View style={styles.facilitiesSection}>
-            <Text style={styles.sectionTitle}>Facilities</Text>
+            <Text style={styles.sectionTitle}>Delivery & Payment</Text>
             {property?.facilities.length > 0 && (
               <View style={styles.facilitiesList}>
                 {property?.facilities.map((item, index) => {
@@ -242,14 +244,27 @@ const Property = () => {
 
       {/* Booking Section */}
       <View style={styles.bookSection}>
+        {added && (
+          <Text style={[styles.listStatus, total > budget && styles.listStatusOver]}>
+            {total > budget
+              ? `Added. Your list is ${formatINR(Math.round((total - budget) * 100) / 100)} over your ${formatINR(budget)} limit.`
+              : `Added to your list. Total ${formatINR(total)} of ${formatINR(budget)}.`}
+          </Text>
+        )}
         <View style={styles.bookSectionContent}>
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>Price</Text>
-            <Text style={styles.price}>${property?.price}</Text>
+            <Text style={styles.price}>{formatINR(property.price)}</Text>
           </View>
 
-          <TouchableOpacity style={styles.bookButton}>
-            <Text style={styles.bookButtonText}>Book Now</Text>
+          <TouchableOpacity
+            style={styles.bookButton}
+            onPress={() => {
+              addItem(property.name, property.price ?? 0);
+              setAdded(true);
+            }}
+          >
+            <Text style={styles.bookButtonText}>{added ? "Add Again" : "Add to List"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -514,6 +529,14 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "white",
     padding: 20,
+  },
+  listStatus: {
+    fontSize: 13,
+    color: "#4CAF50",
+    marginBottom: 10,
+  },
+  listStatusOver: {
+    color: "#F75555",
   },
   bookSectionContent: {
     flexDirection: "row",

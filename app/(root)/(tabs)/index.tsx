@@ -112,7 +112,7 @@ const index = () => {
 
               <View style={{ marginTop: 12 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ fontFamily: 'Rubik-Bold', fontSize: 16 }}>Feactured</Text>
+                  <Text style={{ fontFamily: 'Rubik-Bold', fontSize: 16 }}>Featured</Text>
                   <TouchableOpacity>
                     <Text style={{ color: s.primary[300], fontFamily: 'Rubik-Bold', fontSize: 13 }}> See All</Text>
                   </TouchableOpacity>
@@ -141,7 +141,7 @@ const index = () => {
 
               <View style={{ marginTop: 20 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text style={{ fontFamily: 'Rubik-Bold', fontSize: 16 }}>Our Recomondetion</Text>
+                  <Text style={{ fontFamily: 'Rubik-Bold', fontSize: 16 }}>Recommended for You</Text>
                   <TouchableOpacity>
                     <Text style={{ color: s.primary[300], fontFamily: 'Rubik-Bold', fontSize: 13 }}> See All</Text>
                   </TouchableOpacity>

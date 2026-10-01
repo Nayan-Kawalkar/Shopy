@@ -74,7 +74,7 @@ const Explore = () => {
                 <Image source={icons.backArrow} style={styles.backArrow} />
               </TouchableOpacity>
 
-              <Text style={styles.headerTitle}>Search for Your Ideal Home</Text>
+              <Text style={styles.headerTitle}>Shop Farm-Fresh Groceries</Text>
               <Image source={icons.bell} style={styles.bellIcon} />
             </View>
 
@@ -84,7 +84,7 @@ const Explore = () => {
               <Filters />
 
               <Text style={styles.resultsText}>
-                Found {properties?.length} Properties
+                Found {properties?.length ?? 0} Products
               </Text>
             </View>
           </View>

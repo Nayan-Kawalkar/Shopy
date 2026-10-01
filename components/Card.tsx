@@ -3,6 +3,7 @@ import images from '@/constants/images';
 import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import { s } from '@/app/styles'; // Import global styles
 import { Property } from '@/lib/supabase';
+import { formatINR } from '@/lib/currency';
 
 
 interface Props{
@@ -27,7 +28,7 @@ export const Card = ({ item, onPress }: Props) =>{
                     <Text style={{ fontFamily: 'Rubik-Bold', fontSize:18,color:'black'}} numberOfLines={1}>{item.name}</Text>
                     <Text style={{color:'black'}}>{item.address}</Text>
                     <View style={{flexDirection: 'row',  justifyContent:'space-between',gap:40, alignItems: 'start',}}>
-                        <Text style={{ fontFamily: 'Rubik-Bold', fontSize:18, color: s.primary[300]}}>${item.price}</Text>
+                        <Text style={{ fontFamily: 'Rubik-Bold', fontSize:18, color: s.primary[300]}}>{formatINR(item.price)}</Text>
                         <Image source={icons.heart} style={{ width: 20, height: 20,}} tintColor='#191019'/>
 
                     </View>
@@ -55,7 +56,7 @@ export const FeacherCard = ({item, onPress }: Props) =>{
                     <Text style={{ fontFamily: 'Rubik-Bold', fontSize:18,color:'white'}} numberOfLines={1}>{item.name}</Text>
                     <Text style={{color:'white'}}>{item.address}</Text>
                     <View style={{flexDirection: 'row',  justifyContent:'space-between',gap:100}}>
-                        <Text style={styles.priceText}>${item.price}</Text>
+                        <Text style={styles.priceText}>{formatINR(item.price)}</Text>
                         <Image source={icons.heart} style={{ width: 20, height: 20,}}/>
 
                     </View>

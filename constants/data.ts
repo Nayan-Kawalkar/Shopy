@@ -55,27 +55,22 @@ export const featuredCards = [
   },
 ];
 
+// Product categories (must match `properties.type` in Supabase).
 export const categories = [
   { title: "All", category: "All" },
   { title: "Fresh Fruits & Vegetables", category: "Fresh Fruits & Vegetables" },
+  { title: "Dairy & Eggs", category: "Dairy & Eggs" },
   { title: "Nuts & Dry Fruits", category: "Nuts & Dry Fruits" },
   { title: "Organic & Natural Products", category: "Organic & Natural Products" },
-  { title: "Farming Equipment & Tools", category: "Farming Equipment & Tools" },
-  { title: "Fertilizers & Soil Conditioners", category: "Fertilizers & Soil Conditioners" },
-  { title: "Apartments", category: "Apartments" },
-  { title: "Townhomes", category: "Townhomes" },
-  { title: "Others", category: "Others" },
 ];
 
+// Article topics (must match tags in `articles.type`).
 export const categories2 = [
   { title: "All", category: "All" },
   { title: "Fresh Fruits & Vegetables", category: "Fresh Fruits & Vegetables" },
-  { title: "Nuts & Dry Fruits", category: "Nuts & Dry Fruits" },
   { title: "Organic & Natural Products", category: "Organic & Natural Products" },
   { title: "Farming Equipment & Tools", category: "Farming Equipment & Tools" },
   { title: "Fertilizers & Soil Conditioners", category: "Fertilizers & Soil Conditioners" },
-  { title: "Apartments", category: "Apartments" },
-  { title: "Others", category: "Others" },
 ];
 
 export const settings = [

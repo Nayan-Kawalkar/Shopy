@@ -5,7 +5,7 @@ import * as Linking from "expo-linking"; // for redirect
 import { openAuthSessionAsync } from "expo-web-browser";
 import { AppState, Platform } from "react-native";
 
-// Schema lives in supabase/migrations; sample rows in supabase/seed.sql.
+// Schema lives in supabase/migrations; sample rowss in supabase/seed.sql.
 export interface Agent {
   id: string;
   created_at: string;

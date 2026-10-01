@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
 import * as WebBrowser from "expo-web-browser";
 import GlobalProvider from "@/lib/global-provider";
+import { ShoppingListProvider } from "@/lib/shopping-list";
 import { KeyboardAvoidingView, Platform } from "react-native";
 
 // On web, Google sign-in redirects back to this app inside a popup; this hands the
@@ -31,13 +32,15 @@ export default function RootLayout() {
   }
   return (
         <GlobalProvider>
+          <ShoppingListProvider>
           <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
           <Stack screenOptions={{headerShown : false }} />
-          
+
           </KeyboardAvoidingView>
+          </ShoppingListProvider>
         </GlobalProvider>
 
 

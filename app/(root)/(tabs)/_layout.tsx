@@ -70,6 +70,16 @@ const TabsLayout = () => {
         }}
       />
       <Tabs.Screen
+        name="shopping-list"
+        options={{
+          title: "List",
+          headerShown: false,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon={icons.wallet} title="List" />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="articles-feed"
         options={{
           title: "Article",

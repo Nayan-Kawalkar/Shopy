@@ -9,7 +9,7 @@ import images from '@/constants/images';
 
 import Search from '@/components/Search';
 import { Card, FeacherCard } from '@/components/Card';
-import FilterArticle from '@/components/Filter';
+import FilterArticle from '@/components/FilterArticle';
 import { useGlobalContext } from '@/lib/global-provider';
 import { getLatestArticle, getArticle } from '@/lib/supabase';
 import { useSupabase } from '@/lib/useSupabase';
