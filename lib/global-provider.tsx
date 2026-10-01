@@ -1,21 +1,13 @@
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, ReactNode } from "react";
 
-import { getCurrentUser } from "./appwrite";
-import { useAppwrite } from "./useAppwrite";
-import { Redirect } from "expo-router";
+import { CurrentUser, getCurrentUser, supabase } from "./supabase";
+import { useSupabase } from "./useSupabase";
 
 interface GlobalContextType {
   isLogged: boolean;
-  user: User | null;
+  user: CurrentUser | null;
   loading: boolean;
   refetch: () => void;
-}
-
-interface User {
-  $id: string;
-  name: string;
-  email: string;
-  avatar: string;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -29,9 +21,21 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
     data: user,
     loading,
     refetch,
-  } = useAppwrite({
+  } = useSupabase({
     fn: getCurrentUser,
   });
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        // Deferred: calling other supabase.auth methods inside this callback can deadlock.
+        setTimeout(() => refetch({}), 0);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const isLogged = !!user;
 
@@ -41,7 +45,7 @@ export const GlobalProvider = ({ children }: GlobalProviderProps) => {
         isLogged,
         user,
         loading,
-        refetch,
+        refetch: () => refetch({}),
       }}
     >
       {children}

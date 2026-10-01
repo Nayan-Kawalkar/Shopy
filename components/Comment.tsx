@@ -1,10 +1,10 @@
 import { View, Text, Image, StyleSheet } from "react-native";
 import images from "@/constants/images";
 import icons from "@/constants/icons";
-import { Models } from "react-native-appwrite";
+import { Review } from "@/lib/supabase";
 
 interface Props {
-  item: Models.Document;
+  item: Review;
 }
 
 const Comment = ({ item }: Props) => {
@@ -12,7 +12,7 @@ const Comment = ({ item }: Props) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={{ uri: item.avatar }}
+          source={{ uri: item.avatar ?? undefined }}
           style={styles.avatar}
         />
         <Text style={styles.name}>{item.name}</Text>
@@ -29,7 +29,7 @@ const Comment = ({ item }: Props) => {
           />
           <Text style={styles.likesCount}>120</Text>
         </View>
-        <Text style={styles.date}>{new Date(item.$createdAt).toDateString()}</Text>
+        <Text style={styles.date}>{new Date(item.created_at).toDateString()}</Text>
       </View>
     </View>
   );

@@ -2,9 +2,13 @@ import { Stack } from "expo-router"
 import {useFonts} from "expo-font"
 import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
+import * as WebBrowser from "expo-web-browser";
 import GlobalProvider from "@/lib/global-provider";
 import { KeyboardAvoidingView, Platform } from "react-native";
 
+// On web, Google sign-in redirects back to this app inside a popup; this hands the
+// redirect URL (with the auth code) back to openAuthSessionAsync and closes the popup.
+WebBrowser.maybeCompleteAuthSession();
 
 export default function RootLayout() {
   const color = "color : s"

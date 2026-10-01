@@ -4,9 +4,9 @@ import { s } from '../../styles'; // Import global styles
 import { SafeAreaView } from 'react-native-safe-area-context';
 //import ImageSourcePropType from 'react-native'
 import icons from '@/constants/icons';
-//import images from '@/constants/images';
+import images from '@/constants/images';
 import {settings} from '@/constants/data'
-import {logout} from '@/lib/appwrite';
+import {logout} from '@/lib/supabase';
 import {useGlobalContext} from "@/lib/global-provider";
 import { useRouter } from 'expo-router';
 import SettingsIteam from '@/components/SettingsIteam'
@@ -40,7 +40,7 @@ const profile = () => {
 
   const router = useRouter(); // Use router for navigation
 
-  const {user, refetch}= useGlobalContext();
+  const {user, isLogged, refetch}= useGlobalContext();
   const handleLogout = async() =>{
     console.log("Presss LogOut button ")
     const result =await logout();
@@ -72,7 +72,7 @@ const profile = () => {
 
                   <View style={{flexDirection:'column', alignItems:'center', flex:1, marginTop: 20, position:'relative'}}>
 
-                        <Image source={{uri: user?.avatar}} style={{width:125, height:125  ,borderRadius: 9999}}></Image>
+                        <Image source={user?.avatar ? {uri: user.avatar} : images.avatar} style={{width:125, height:125  ,borderRadius: 9999}}></Image>
                         <TouchableOpacity style={{position:'absolute', bottom:48, right:81}}>
                           <Image source={icons.edit} style={{width:25, height:25}}/>
                         </TouchableOpacity>
@@ -100,7 +100,11 @@ const profile = () => {
                 <View style={{paddingBottom:10}}></View>
                 
                 <View style={{flex: 1, flexDirection: 'column', marginTop: 20,gap:20}}>
-                 < SettingsIteam icon={icons.logout} title="Logout" textStyle='hello' onPress={handleLogout} showArrow={false} />
+                 {isLogged ? (
+                   < SettingsIteam icon={icons.logout} title="Logout" textStyle='hello' onPress={handleLogout} showArrow={false} />
+                 ) : (
+                   < SettingsIteam icon={icons.google} title="Sign in with Google" textStyle={undefined} onPress={() => router.push('/sign-up')} />
+                 )}
                 </View>
                 <View style={{flex: 1, flexDirection: 'column', marginTop: 20,paddingBottom: 50,}}>
                  

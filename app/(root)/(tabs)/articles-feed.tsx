@@ -11,9 +11,8 @@ import Search from '@/components/Search';
 import { Card, FeacherCard } from '@/components/Card';
 import FilterArticle from '@/components/Filter';
 import { useGlobalContext } from '@/lib/global-provider';
-import seed from '@/lib/seed';
-import { getLatestArticle, getArticle } from '@/lib/appwrite';
-import { useAppwrite } from '@/lib/useAppwrite';
+import { getLatestArticle, getArticle } from '@/lib/supabase';
+import { useSupabase } from '@/lib/useSupabase';
 import NoResults from '@/components/NoResult';
 //import Card from '@/components/Card'
 import Comment from '@/components/Comment';
@@ -35,7 +34,7 @@ const ArticlesFeed = () => {
   const params = useLocalSearchParams<{ query?: string; filter?: string }>();
 
   const { data: latestArticles, loading: latestArticlesLoading } =
-    useAppwrite({
+    useSupabase({
       fn: getLatestArticle,
     });
 
@@ -43,7 +42,7 @@ const ArticlesFeed = () => {
     data: articles,
     refetch,
     loading,
-  } = useAppwrite({
+  } = useSupabase({
     fn: getArticle,
     params: {
       filter: params.filter!,
@@ -76,8 +75,8 @@ const ArticlesFeed = () => {
     <View style={styles.container}>
       <FlatList
           data={articles}
-          renderItem={({item}) => <ArticleCard item={item} onPress={()=> handleCardPress(item.$id)} />}
-          keyExtractor={(item) => item.toString()}
+          renderItem={({item}) => <ArticleCard item={item} onPress={()=> handleCardPress(item.id)} />}
+          keyExtractor={(item) => item.id}
           numColumns={2}
           contentContainerStyle={{paddingBottom: 0,}}
           columnWrapperStyle={{justifyContent: 'space-between', gap: 20,}}

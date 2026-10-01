@@ -1,6 +1,6 @@
 import { Image, Text, TouchableOpacity, View, StyleSheet } from "react-native"
 import { router } from "expo-router"
-import { Models } from "react-native-appwrite"
+import { Article } from "@/lib/supabase"
 
 // Define the article type for TypeScript
 type ArticleCardProps = {
@@ -19,7 +19,7 @@ type ArticleCardProps = {
   }
 }
 interface Props{
-  item: Models.Document;
+  item: Article;
   onPress?: () => void;
 }
 
@@ -31,7 +31,7 @@ const ArticleCard = ({ item, onPress }: Props) => {
     <TouchableOpacity style={styles.container} activeOpacity={0.9} onPress={onPress}>
       {/* Article Image */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
+        <Image source={{ uri: item.image ?? undefined }} style={styles.image} resizeMode="cover" />
 
         {/* Tag overlay */}
         {item.type && item.type.length > 0 && (
@@ -50,9 +50,9 @@ const ArticleCard = ({ item, onPress }: Props) => {
 
         {/* Author info */}
         <View style={styles.authorContainer}>
-          <Image source={{ uri: item.agents.avatar }} style={styles.authorAvatar} />
+          <Image source={{ uri: item.agent?.avatar ?? undefined }} style={styles.authorAvatar} />
           <View>
-            <Text style={styles.authorName}>{item.agents.name}</Text>
+            <Text style={styles.authorName}>{item.agent?.name}</Text>
             <Text style={styles.dateText}>
               {item.date} • 
             </Text>

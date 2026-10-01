@@ -3,12 +3,12 @@ import {
   ActivityIndicator,
   FlatList,
   Image,
-  SafeAreaView,
   Text,
   TouchableOpacity,
   View,
   StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useLocalSearchParams } from "expo-router";
 
 import icons from "@/constants/icons";
@@ -17,8 +17,8 @@ import { Card } from "@/components/Card";
 import Filters from "@/components/Filter";
 import NoResults from "@/components/NoResult";
 
-import { getProperties } from "@/lib/appwrite";
-import { useAppwrite } from "@/lib/useAppwrite";
+import { getProperties } from "@/lib/supabase";
+import { useSupabase } from "@/lib/useSupabase";
 
 const Explore = () => {
   const params = useLocalSearchParams<{ query?: string; filter?: string }>();
@@ -27,7 +27,7 @@ const Explore = () => {
     data: properties,
     refetch,
     loading,
-  } = useAppwrite({
+  } = useSupabase({
     fn: getProperties,
     params: {
       filter: params.filter!,
@@ -51,9 +51,9 @@ const Explore = () => {
         data={properties}
         numColumns={2}
         renderItem={({ item }) => (
-          <Card item={item} onPress={() => handleCardPress(item.$id)} />
+          <Card item={item} onPress={() => handleCardPress(item.id)} />
         )}
-        keyExtractor={(item) => item.$id}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.contentContainer}
         columnWrapperStyle={styles.columnWrapper}
         showsVerticalScrollIndicator={false}

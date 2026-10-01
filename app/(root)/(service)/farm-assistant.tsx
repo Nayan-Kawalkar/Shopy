@@ -36,7 +36,7 @@ export default function FarmAssistantScreen() {
   const [inputText, setInputText] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const scrollViewRef = useRef()
+  const scrollViewRef = useRef<ScrollView>(null)
 
   useEffect(() => {
     // Scroll to bottom when messages change

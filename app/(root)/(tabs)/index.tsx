@@ -9,9 +9,8 @@ import Search from '@/components/Search';
 import { Card, FeacherCard } from '@/components/Card';
 import Filter from '@/components/Filter';
 import { useGlobalContext } from '@/lib/global-provider';
-import seed from '@/lib/seed';
-import { getLatestProperties, getProperties } from '@/lib/appwrite';
-import { useAppwrite } from '@/lib/useAppwrite';
+import { getLatestProperties, getProperties } from '@/lib/supabase';
+import { useSupabase } from '@/lib/useSupabase';
 import NoResults from '@/components/NoResult';
 //import Card from '@/components/Card'
 import Comment from '@/components/Comment';
@@ -28,7 +27,7 @@ const index = () => {
   const params = useLocalSearchParams<{ query?: string; filter?: string }>();
 
   const { data: latestProperties, loading: latestPropertiesLoading } =
-    useAppwrite({
+    useSupabase({
       fn: getLatestProperties,
     });
 
@@ -36,7 +35,7 @@ const index = () => {
     data: properties,
     refetch,
     loading,
-  } = useAppwrite({
+  } = useSupabase({
     fn: getProperties,
     params: {
       filter: params.filter!,
@@ -65,8 +64,8 @@ const index = () => {
 
         <FlatList
           data={properties}
-          renderItem={({item}) => <Card item={item} onPress={()=> handleCardPress(item.$id)} />}
-          keyExtractor={(item) => item.toString()}
+          renderItem={({item}) => <Card item={item} onPress={()=> handleCardPress(item.id)} />}
+          keyExtractor={(item) => item.id}
           numColumns={2}
           contentContainerStyle={{paddingBottom: 0,}}
           columnWrapperStyle={{justifyContent: 'space-between', gap: 20,}}
@@ -84,7 +83,7 @@ const index = () => {
               justifyContent: 'space-between'
             }}>
               <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Image source={{uri: user?.avatar}} style={styles.image} />
+                <Image source={user?.avatar ? {uri: user.avatar} : images.avatar} style={styles.image} />
 
                 <View style={{
                   flexDirection: 'column', alignItems: 'start',
@@ -127,8 +126,8 @@ const index = () => {
               ) : (
                <FlatList
                     data={latestProperties}
-                    renderItem={({item}) => <FeacherCard item={item} onPress={()=> handleCardPress(item.$id)} />}
-                    keyExtractor={(item) => item.toString()}
+                    renderItem={({item}) => <FeacherCard item={item} onPress={()=> handleCardPress(item.id)} />}
+                    keyExtractor={(item) => item.id}
                     horizontal
                     bounces={false}
                     showsHorizontalScrollIndicator={false}

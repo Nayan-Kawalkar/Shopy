@@ -10,8 +10,6 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
-import { Models } from 'react-native-appwrite';
-
 import { router, useLocalSearchParams } from "expo-router";
 
 import icons from "@/constants/icons";
@@ -19,16 +17,16 @@ import images from "@/constants/images";
 import Comment from "@/components/Comment";
 import { facilities } from "@/constants/data";
 
-import { useAppwrite } from "@/lib/useAppwrite";
-import { getPropertyById } from "@/lib/appwrite";
+import { useSupabase } from "@/lib/useSupabase";
+import { getPropertyById } from "@/lib/supabase";
 
 const Property = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
 
   const windowHeight = Dimensions.get("window").height;
   
-  // Fetching property data from Appwrite database
-  const { data: property } = useAppwrite({
+  // Fetching property data from Supabase
+  const { data: property } = useSupabase({
     fn: getPropertyById,
     params: {
       id: id!,
@@ -56,7 +54,7 @@ const Property = () => {
         {/* Image section */}
         <View style={[styles.imageContainer, { height: windowHeight / 2 }]}>
           <Image
-            source={{ uri: property?.Images }}
+            source={{ uri: property?.image ?? undefined }}
             style={styles.fullSizeImage}
             resizeMode="cover"
           />
@@ -107,14 +105,14 @@ const Property = () => {
               <View style={styles.container}>
                 <Image source={icons.bed} style={styles.iconSize} />
               </View>
-              <Text style={styles.infoText}>{property?.Fertilizers_Percentages}Fertilizers</Text>
+              <Text style={styles.infoText}>{property?.fertilizers_percentage} Fertilizers</Text>
             </View>
 
             <View style={styles.infoItem}>
               <View style={styles.container}>
                 <Image source={icons.bath} style={styles.iconSize} />
               </View>
-              <Text style={styles.infoText}>{property?.Pesticides_Insecticides} Pesticides</Text>
+              <Text style={styles.infoText}>{property?.pesticides_insecticides} Pesticides</Text>
             </View>
 
             <View style={styles.infoItem}>
@@ -131,12 +129,12 @@ const Property = () => {
             <View style={styles.agentInfo}>
               <View style={styles.agentInfoLeft}>
                 <Image
-                  source={{ uri: property?.agents.avatar }}
+                  source={{ uri: property?.agent?.avatar ?? undefined }}
                   style={styles.agentAvatar}
                 />
                 <View style={styles.agentDetails}>
-                  <Text style={styles.agentName}>{property?.agents.name}</Text>
-                  <Text style={styles.agentEmail}>{property?.agents.email}</Text>
+                  <Text style={styles.agentName}>{property?.agent?.name}</Text>
+                  <Text style={styles.agentEmail}>{property?.agent?.email}</Text>
                 </View>
               </View>
 
@@ -158,7 +156,7 @@ const Property = () => {
             <Text style={styles.sectionTitle}>Facilities</Text>
             {property?.facilities.length > 0 && (
               <View style={styles.facilitiesList}>
-                {property?.facilities.map((item: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined, index: React.Key | null | undefined) => {
+                {property?.facilities.map((item, index) => {
                   const facility = facilities.find(
                     (facility) => facility.title === item
                   );
@@ -191,12 +189,12 @@ const Property = () => {
               <FlatList
                 contentContainerStyle={styles.galleryList}
                 data={property?.galleries}
-                keyExtractor={(item) => item.$id}
+                keyExtractor={(item) => item.id}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 renderItem={({ item }) => (
                   <Image
-                    source={{ uri: property?.Images }}
+                    source={{ uri: item.image }}
                     style={styles.galleryImage}
                   />
                 )}
@@ -247,7 +245,7 @@ const Property = () => {
         <View style={styles.bookSectionContent}>
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>Price</Text>
-            <Text style={styles.price}>${property?.Price}</Text>
+            <Text style={styles.price}>${property?.price}</Text>
           </View>
 
           <TouchableOpacity style={styles.bookButton}>

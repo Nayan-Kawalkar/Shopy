@@ -1,25 +1,24 @@
 import { Alert } from "react-native";
 import { useEffect, useState, useCallback } from "react";
-import {GlobalProvider} from '@/lib/global-provider'
 
-interface UseAppwriteOptions<T, P extends Record<string, string | number>> {
+interface UseSupabaseOptions<T, P extends Record<string, string | number>> {
   fn: (params: P) => Promise<T>;
   params?: P;
   skip?: boolean;
 }
 
-interface UseAppwriteReturn<T, P> {
+interface UseSupabaseReturn<T, P> {
   data: T | null;
   loading: boolean;
   error: string | null;
   refetch: (newParams: P) => Promise<void>;
 }
 
-export const useAppwrite = <T, P extends Record<string, string | number>>({
+export const useSupabase = <T, P extends Record<string, string | number>>({
   fn,
   params = {} as P,
   skip = false,
-}: UseAppwriteOptions<T, P>): UseAppwriteReturn<T, P> => {
+}: UseSupabaseOptions<T, P>): UseSupabaseReturn<T, P> => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(!skip);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 // styles.js
-import { StyleSheet } from 'react-native';
-
-export const s = StyleSheet.create({
+// Plain object (not StyleSheet.create): it holds tokens like `danger: "#F75555"`,
+// and react-native-web's StyleSheet.create throws on non-object values.
+export const s = {
   heading: {
     fontSize: 40,
     fontWeight: 'bold',
@@ -62,5 +62,5 @@ export const s = StyleSheet.create({
       300: "#191D31",
     },
     danger: "#F75555",
-  
-});
+
+};

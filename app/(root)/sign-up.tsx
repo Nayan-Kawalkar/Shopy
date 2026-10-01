@@ -1,26 +1,33 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, router } from 'expo-router';
 import { s } from '../styles'; // Import global styles
 import images from '@/constants/images';
 import icons from '@/constants/icons';
-import {login} from '@/lib/appwrite';
+import {login} from '@/lib/supabase';
+import { useGlobalContext } from '@/lib/global-provider';
 
 
 const App = () => {
+  const { isLogged, loading } = useGlobalContext();
+  const [signingIn, setSigningIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!loading && isLogged) return <Redirect href="/" />;
 
   // Function to handle login submission
   const handleLogin = async () => {
-    console.log("Login button pressed");
-    const result =await login();
+    setError(null);
+    setSigningIn(true);
+    const result = await login();
+    setSigningIn(false);
 
     if(result){
-      console.log("Login Succesfull");
+      router.replace("/");
     } else {
-      console.log("Login Error");
+      setError("Google sign-in was cancelled or failed. Please try again.");
     }
-
-    
   };
 
   return (
@@ -52,12 +59,17 @@ const App = () => {
 
         {/* Google Login Button */}
         <View style={{ alignItems: 'center', gap:0 }}>
-          <TouchableOpacity onPress={handleLogin} style={styles.button}>
+          <TouchableOpacity onPress={handleLogin} style={styles.button} disabled={signingIn}>
             <View style={styles.buttonContent}>
-              <Image source={icons.google} style={styles.googleIcon} />
+              {signingIn ? (
+                <ActivityIndicator color={s.primary[300]} />
+              ) : (
+                <Image source={icons.google} style={styles.googleIcon} />
+              )}
               <Text style={styles.buttonText}>Continue with Google</Text>
             </View>
           </TouchableOpacity>
+          {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
         
       </ScrollView>
@@ -132,6 +144,12 @@ const styles = StyleSheet.create({
     color: s.black[200],
     fontFamily: "Rubik-Medium",
     fontSize: 16,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: s.danger,
+    fontFamily: "Rubik-Regular",
+    marginTop: 12,
     textAlign: 'center',
   },
 });

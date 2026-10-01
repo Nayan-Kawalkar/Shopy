@@ -15,15 +15,15 @@ import icons from "@/constants/icons";
 import images from "@/constants/images";
 import { technologies } from "@/constants/data";
 
-import { useAppwrite } from "@/lib/useAppwrite";
-import { getArticleById } from "@/lib/appwrite";
-  
+import { useSupabase } from "@/lib/useSupabase";
+import { getArticleById } from "@/lib/supabase";
+
 const FarmingArticle = () => {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const windowHeight = Dimensions.get("window").height;
-  
-  // Fetching article data from Appwrite database
-  const { data: article, loading, error } = useAppwrite({
+
+  // Fetching article data from Supabase
+  const { data: article, loading, error } = useSupabase({
     fn: getArticleById,
     params: {
       id: id!,
@@ -43,7 +43,7 @@ const FarmingArticle = () => {
   if (error) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Error loading article: {error.message}</Text>
+        <Text>Error loading article: {error}</Text>
       </View>
     );
   }
@@ -57,7 +57,7 @@ const FarmingArticle = () => {
       >
         {/* Cover Image section */}
         <View style={[styles.imageContainer, { height: windowHeight / 2 }]}>
-          <Image source={{ uri: article.image }} style={styles.fullSizeImage} resizeMode="cover" />
+          <Image source={{ uri: article.image ?? undefined }} style={styles.fullSizeImage} resizeMode="cover" />
           <View style={[styles.headerContainer, { top: Platform.OS === "android" ? 70 : 20 }]}>
             <View style={styles.header}>
               <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -95,18 +95,18 @@ const FarmingArticle = () => {
           </View>
 
           {/* Author Information */}
-          {article.agents && (
+          {article.agent && (
             <View style={styles.authorSection}>
               <View style={styles.authorInfo}>
                 <View style={styles.authorInfoLeft}>
-                  <Image 
-                    source={{ uri: article.agents.avatar }} 
+                  <Image
+                    source={{ uri: article.agent.avatar ?? undefined }}
                     style={styles.authorAvatar} 
                     defaultSource={require("@/assets/placeholder.png")} // Make sure you have a placeholder image
                   />
                   <View style={styles.authorDetails}>
-                    <Text style={styles.authorName}>{article.agents.name}</Text>
-                    <Text style={styles.authorEmail}>{article.agents.email}</Text>
+                    <Text style={styles.authorName}>{article.agent.name}</Text>
+                    <Text style={styles.authorEmail}>{article.agent.email}</Text>
                   </View>
                 </View>
                 <TouchableOpacity style={styles.followButton}>
@@ -128,7 +128,7 @@ const FarmingArticle = () => {
                 <View style={styles.statIconContainer}>
                   <Image source={icons.area} style={styles.iconSize} />
                 </View>
-                <Text style={styles.statText}>{article.Farm_size || "N/A"}</Text>
+                <Text style={styles.statText}>{article.farm_size || "N/A"}</Text>
                 <Text style={styles.statLabel}>Farm Size</Text>
               </View>
               <View style={styles.statItem}>
@@ -149,15 +149,11 @@ const FarmingArticle = () => {
           </ScrollView>
 
           {/* Content Sections */}
-          {article.title.map((section, index) => (
-            <View>
-            {article?.text.map((section2, index) => (
+          {article.section_titles.map((sectionTitle, index) => (
             <View key={index} style={styles.contentSection}>
-              <Text style={styles.sectionTitle}>{section}</Text>
-              <Text style={styles.sectionText}>{section2}</Text>
+              <Text style={styles.sectionTitle}>{sectionTitle}</Text>
+              <Text style={styles.sectionText}>{article.section_texts[index]}</Text>
             </View>
-             ))}
-             </View>
           ))}
 
           {/* Farming Technologies */}
